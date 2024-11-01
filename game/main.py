@@ -24,56 +24,53 @@ app = Client(
 )
 games_runner = GamesRunner()
 
+def _handle_card_picking(content, game, chat_id, client):
+    card_txt = game.get_card(chat_id, int(content))
+    client.send_message(
+        games_runner.get_chat_id(chat_id), "Someone chose card:" + card_txt
+    )
+    if game.did_all_players_picked():
+        picker_id = game.get_turn_id()
+        buttons = game.get_buttons(picker_id)
+        client.send_message(
+            picker_id,
+            "Time to choose a winner!:",
+            reply_markup=InlineKeyboardMarkup(buttons),
+        )
+
+def _handle_round_end(content, game, chat_id, client, msg):
+    client.send_message(
+        games_runner.get_chat_id(chat_id), "We have a winner card!:"
+    )
+    client.send_message(
+        games_runner.get_chat_id(chat_id),
+        {game.get_card_from_picked(int(content))},
+    )
+    game_round(client, msg, game)
+
 @app.on_callback_query()
 def button_click(client, callback_query):
     chat_id = callback_query.message.chat.id
     game = games_runner.get_game(callback_query.message.chat.id)
     data_lst = callback_query.data.split(":::")
 
-    if len(data_lst) > 1 and data_lst[0] == "card":
-        card_txt = game.get_card(chat_id, int(data_lst))
-        client.send_message(
-            games_runner.get_chat_id(chat_id), "Someone chose card:" + card_txt
-        )
-        if game.did_all_players_picked():
-            picker_id = game.get_turn_id()
-            bottons = game.get_buttons(picker_id)
-            client.send_message(
-                picker_id,
-                "Time to choose a winner!:",
-                reply_markup=InlineKeyboardMarkup(bottons),
-            )
-
-    # client.send_message(games_runner.get_chat_id(chat_id), "Someone chose card:" + card_txt)
-    # client.send_message(chat_id, callback_query)
-    if len(data_lst) > 1 and data_lst[0] == "round":
-        client.send_message(
-            games_runner.get_chat_id(chat_id), "We have a winner card!:"
-        )
-        client.send_message(
-            games_runner.get_chat_id(chat_id),
-            {game.get_card_from_picked(int(data_lst[1]))},
-        )
-        game_round(client, callback_query.message, game)
-        # client.send_message(f"chosen card was ")
-        # game_round(game, callback_query.message, client)
+    if len(data_lst) > 1:
+        data_type = data_lst[0]
+        content = data_lst[1]
+        if data_type == "card":
+            _handle_card_picking(content, game, chat_id, client)
+        elif data_type == "round":
+            _handle_round_end(content, game, chat_id, callback_query.message)
 
 
 @app.on_message(filters.command("join"))
 def start_command(client, message):
-
-    game = games_runner.get_game(message.chat.id)
-    user_id = message.from_user.id
-
     games_runner.add_player(message.chat.id, message.from_user.id)
 
     client.send_message(
         message.chat.id,
         f"{message.from_user.first_name} joined the game. /start when all players are joined",
     )
-    # keyboard = InlineKeyboardMarkup(game.get_start_buttons())
-    # client.send_message(message.from_user.id, "Start!", reply_markup=keyboard)
-    # Send message with the inline keyboard
 
 
 def game_round(client, message, game):
