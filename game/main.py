@@ -7,8 +7,8 @@ from pyrogram import Client, filters
 def read_config(file_path):
     try:
         with open(file_path, "r") as file:
-            config = json.load(file)
-        return config
+            bot_config = json.load(file)
+        return bot_config
     except FileNotFoundError:
         print(f"Config file '{file_path}' not found.")
         return {}
@@ -24,22 +24,20 @@ app = Client(
 )
 games_runner = GamesRunner()
 
-
 @app.on_callback_query()
 def button_click(client, callback_query):
     chat_id = callback_query.message.chat.id
     game = games_runner.get_game(callback_query.message.chat.id)
-    splited = callback_query.data.split(":::")
+    data_lst = callback_query.data.split(":::")
 
-    if len(splited) > 1 and splited[0] == "card":
-        card_txt = game.get_card(chat_id, int(splited[1]))
+    if len(data_lst) > 1 and data_lst[0] == "card":
+        card_txt = game.get_card(chat_id, int(data_lst))
         client.send_message(
             games_runner.get_chat_id(chat_id), "Someone chose card:" + card_txt
         )
-        print(game.did_all_players_picked())
         if game.did_all_players_picked():
             picker_id = game.get_turn_id()
-            bottons = game.get_bottons(picker_id)
+            bottons = game.get_buttons(picker_id)
             client.send_message(
                 picker_id,
                 "Time to choose a winner!:",
@@ -48,13 +46,13 @@ def button_click(client, callback_query):
 
     # client.send_message(games_runner.get_chat_id(chat_id), "Someone chose card:" + card_txt)
     # client.send_message(chat_id, callback_query)
-    if len(splited) > 1 and splited[0] == "round":
+    if len(data_lst) > 1 and data_lst[0] == "round":
         client.send_message(
             games_runner.get_chat_id(chat_id), "We have a winner card!:"
         )
         client.send_message(
             games_runner.get_chat_id(chat_id),
-            {game.get_card_from_picked(int(splited[1]))},
+            {game.get_card_from_picked(int(data_lst[1]))},
         )
         game_round(client, callback_query.message, game)
         # client.send_message(f"chosen card was ")
@@ -91,8 +89,8 @@ def game_round(client, message, game):
     #  maybe player_to_chat is not required?
     print(games_runner.player_to_chat.keys())
     for user in games_runner.player_to_chat.keys():
-        bottons = game.get_bottons(user)
-        keyboard = InlineKeyboardMarkup(bottons)
+        buttons = game.get_buttons(user)
+        keyboard = InlineKeyboardMarkup(buttons)
         print(keyboard)
         client.send_message(user, "Time to choose.", reply_markup=keyboard)
 
