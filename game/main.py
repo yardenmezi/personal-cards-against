@@ -82,9 +82,6 @@ def game_round(client, message, game):
     )
     client.send_message(chat_id, f"You have a new black card. X choose")
     client.send_message(chat_id, f"***{game.get_black_card()}***")
-    # TODO: should be chat specific!!! only players in this game. (chat_id).
-    #  maybe player_to_chat is not required?
-    print(games_runner.player_to_chat.keys())
     for user in games_runner.player_to_chat.keys():
         buttons = game.get_buttons(user)
         keyboard = InlineKeyboardMarkup(buttons)

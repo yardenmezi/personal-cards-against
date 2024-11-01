@@ -49,7 +49,7 @@ class Game:
     def get_black_card(self):
         return self.black_cards.draw_card()
 
-    def get_buttons(self, player_id, callback_data=None):  # TODO: GET PLAYER BOTTONS?
+    def get_buttons(self, player_id, callback_data=None):
         if self.player_idx[self.turn] == player_id:
             if self.did_all_players_picked():
                 if len(self.player_idx) == 1:
