@@ -2,6 +2,7 @@ import json
 from pyrogram.types import InlineKeyboardMarkup
 from game_runner import GamesRunner
 from pyrogram import Client, filters
+from game import SPLIT_SIGN
 
 
 def read_config(file_path):
@@ -24,6 +25,7 @@ app = Client(
 )
 games_runner = GamesRunner()
 
+
 def _handle_card_picking(content, game, chat_id, client):
     card_txt = game.get_card(chat_id, int(content))
     client.send_message(
@@ -38,21 +40,21 @@ def _handle_card_picking(content, game, chat_id, client):
             reply_markup=InlineKeyboardMarkup(buttons),
         )
 
+
 def _handle_round_end(content, game, chat_id, client, msg):
-    client.send_message(
-        games_runner.get_chat_id(chat_id), "We have a winner card!:"
-    )
+    client.send_message(games_runner.get_chat_id(chat_id), "We have a winner card!:")
     client.send_message(
         games_runner.get_chat_id(chat_id),
         {game.get_card_from_picked(int(content))},
     )
     game_round(client, msg, game)
 
+
 @app.on_callback_query()
 def button_click(client, callback_query):
     chat_id = callback_query.message.chat.id
     game = games_runner.get_game(callback_query.message.chat.id)
-    data_lst = callback_query.data.split(":::")
+    data_lst = callback_query.data.split(SPLIT_SIGN)
 
     if len(data_lst) > 1:
         data_type = data_lst[0]

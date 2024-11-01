@@ -1,5 +1,6 @@
 from game import Game
 
+
 class GamesRunner:
     def __init__(self):
         self.games = {}

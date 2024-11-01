@@ -4,6 +4,8 @@ from pyrogram.types.bots_and_keyboards import callback_query
 
 from cards import CardsPile
 
+SPLIT_SIGN = ":::"
+
 
 class Game:
     def __init__(self, chat_id):
@@ -49,25 +51,26 @@ class Game:
     def get_black_card(self):
         return self.black_cards.draw_card()
 
+    def _handle_all_players_picked(self):
+        if len(self.player_idx) == 1:
+            buttons = [[InlineKeyboardButton("you are alone here..")]]
+        else:
+            buttons = [
+                [InlineKeyboardButton(card[0], "round" + SPLIT_SIGN + str(i))]
+                for i, card in enumerate(self.turn_cards)
+            ]
+        self.turn = (self.turn + 1) % len(self.players_card)
+        return buttons
+
     def get_buttons(self, player_id, callback_data=None):
         if self.player_idx[self.turn] == player_id:
             if self.did_all_players_picked():
-                if len(self.player_idx) == 1:
-                    buttons = [
-                        [InlineKeyboardButton("you are alone here..")]
-                    ]
-                else:
-                    buttons = [
-                        [InlineKeyboardButton(card[0], "round" + ":::" + str(i))]
-                        for i, card in enumerate(self.turn_cards)
-                    ]
-                self.turn = (self.turn + 1) % len(self.players_card)
+                buttons = self._handle_all_players_picked()
             else:
                 buttons = [[InlineKeyboardButton("WAIT.", "NOTHING")]]
         else:
             buttons = [
-                [InlineKeyboardButton(card, "card" + ":::" + str(i))]
+                [InlineKeyboardButton(card, "card" + SPLIT_SIGN + str(i))]
                 for i, card in enumerate(self.players_card[player_id])
             ]
-
         return buttons
